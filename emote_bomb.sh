@@ -3,7 +3,7 @@
 for I in `cat egg_id.txt`; do \
     for J in `cat key.txt`; do node index.js \ 
     --id $I \
-    -e ws://localhost:9944 \
+    -e ws://kusama-rpc.polkadot.io \
     -s $J \
     --emotes 🐣 ; done \
 done
