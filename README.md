@@ -57,8 +57,9 @@ node index.js --id <RMRK_ID> -e wss://kusama-rpc.polkadot.io -s "<SEED_PHRASE>" 
 
 You can find [emoji unicodes here](https://unicode.org/emoji/charts/full-emoji-list.html) and [here](./emoji-unicodes.txt).
 
-## Emote Bomb - emote_bomb.sh
+ℹ️ The following scripts enable emoting multiple NFTs easier, but requires some manual funding and importing of the accounts into GUI. These are not necessary for normal function of rmrk-emote-batch.
 
+## Emote Bomb Script - emote_bomb.sh
  - egg_id.txt contains egg id, 1 per line
  - Example: 
 ```txt
@@ -71,7 +72,7 @@ You can find [emoji unicodes here](https://unicode.org/emoji/charts/full-emoji-l
  - you must import and fund each wallet manually on polkadot.js.org/apps
 
 ## keygen.sh
-- To change the number of wallets generated, edit the .txt and change the value of N
+- To change the number of wallets generated, edit keygen.sh and change the value of N
 - By default, N=50
 
 
