@@ -74,7 +74,8 @@ You can find [emoji unicodes here](https://unicode.org/emoji/charts/full-emoji-l
 bash emote_bomb.sh
 ```
 
-## keygen.sh
+## keygen.sh 
+- requires subkey ** https://substrate.dev/docs/en/knowledgebase/integrate/subkey
 - To change the number of wallets generated, edit keygen.sh and change the value of N
 - By default, N=50
 - Run with:
