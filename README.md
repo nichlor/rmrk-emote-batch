@@ -57,7 +57,7 @@ node index.js --id <RMRK_ID> -e wss://kusama-rpc.polkadot.io -s "<SEED_PHRASE>" 
 
 You can find [emoji unicodes here](https://unicode.org/emoji/charts/full-emoji-list.html) and [here](./emoji-unicodes.txt).
 
-ℹ️ The following scripts enable emoting multiple NFTs easier, but requires some manual funding and importing of the accounts into GUI. These are not necessary for normal function of rmrk-emote-batch.
+## The following scripts enable emoting multiple RMRK NFTs, but requires some manual funding and importing of the accounts into GUI. These are not necessary for normal function of rmrk-emote-batch.
 
 ## Emote Bomb Script - emote_bomb.sh
  - egg_id.txt contains egg id, 1 per line
