@@ -70,6 +70,10 @@ You can find [emoji unicodes here](https://unicode.org/emoji/charts/full-emoji-l
  - keys.txt contains KSM acct private keys, 1 per line (keygen.sh will create these)
  - you must import and fund each wallet manually on polkadot.js.org/apps
 
+## keygen.sh
+- To change the number of wallets generated, edit the .txt and change the value of N
+- By default, N=50
+
 
 
 ## Commands
