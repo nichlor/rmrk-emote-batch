@@ -60,7 +60,7 @@ You can find [emoji unicodes here](https://unicode.org/emoji/charts/full-emoji-l
 ## Emote Bomb - emote_bomb.sh
 
  - egg_id.txt contains egg id, 1 per line
- Example: 
+ - Example: 
 ```txt
 6802213-24d573f4dfa1d7fd33-KAN-KANS-0000000000000001
 6802213-24d573f4dfa1d7fd33-KAN-KANF-0000000000000010
