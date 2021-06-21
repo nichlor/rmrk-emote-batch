@@ -57,6 +57,21 @@ node index.js --id <RMRK_ID> -e wss://kusama-rpc.polkadot.io -s "<SEED_PHRASE>" 
 
 You can find [emoji unicodes here](https://unicode.org/emoji/charts/full-emoji-list.html) and [here](./emoji-unicodes.txt).
 
+## Emote Bomb - emote_bomb.sh
+
+ - egg_id.txt contains egg id, 1 per line
+ Example: 
+```txt
+6802213-24d573f4dfa1d7fd33-KAN-KANS-0000000000000001
+6802213-24d573f4dfa1d7fd33-KAN-KANF-0000000000000010
+6802639-24d573f4dfa1d7fd33-KAN-KANL-0000000000006514
+```
+
+ - keys.txt contains KSM acct private keys, 1 per line (keygen.sh will create these)
+ - you must import and fund each wallet manually on polkadot.js.org/apps
+
+
+
 ## Commands
 
 ```txt
