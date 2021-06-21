@@ -67,6 +67,9 @@ You can find [emoji unicodes here](https://unicode.org/emoji/charts/full-emoji-l
 6802213-24d573f4dfa1d7fd33-KAN-KANF-0000000000000010
 6802639-24d573f4dfa1d7fd33-KAN-KANL-0000000000006514
 ```
+```sh
+bash emote_bomb.sh
+```
 
  - keys.txt contains KSM acct private keys, 1 per line (keygen.sh will create these)
  - you must import and fund each wallet manually on polkadot.js.org/apps
@@ -74,6 +77,10 @@ You can find [emoji unicodes here](https://unicode.org/emoji/charts/full-emoji-l
 ## keygen.sh
 - To change the number of wallets generated, edit keygen.sh and change the value of N
 - By default, N=50
+- Run with:
+```sh
+bash keygen.sh
+```
 
 
 
