@@ -57,6 +57,23 @@ node index.js --id <RMRK_ID> -e wss://kusama-rpc.polkadot.io -s "<SEED_PHRASE>" 
 
 You can find [emoji unicodes here](https://unicode.org/emoji/charts/full-emoji-list.html) and [here](./emoji-unicodes.txt).
 
+## Commands
+
+```txt
+Options:
+      --help      Show help                                            [boolean]
+      --version   Show version number                                  [boolean]
+      --id        The id of your target egg                  [string] [required]
+  -e, --endpoint  The wss endpoint. [Westend = wss://westend-rpc.polkadot.io]
+                  [Kusama = wss://kusama-rpc.polkadot.io]    [string] [required]
+  -s, --seed      Your mnemonic seed. It is not saved anywhere.
+                                                             [string] [required]
+      --emotes    array of emojis, space separated                       [array]
+  -r, --remove    array of emojis to remove from the list, space separated
+                                                                         [array]
+```
+
+
 ## The following scripts enable emoting multiple RMRK NFTs, but requires some manual funding and importing of the accounts into GUI. These are not necessary for normal function of rmrk-emote-batch.
 
 ## Emote Bomb Script - emote_bomb.sh
@@ -81,22 +98,4 @@ bash emote_bomb.sh
 - Run with:
 ```sh
 bash keygen.sh
-```
-
-
-
-## Commands
-
-```txt
-Options:
-      --help      Show help                                            [boolean]
-      --version   Show version number                                  [boolean]
-      --id        The id of your target egg                  [string] [required]
-  -e, --endpoint  The wss endpoint. [Westend = wss://westend-rpc.polkadot.io]
-                  [Kusama = wss://kusama-rpc.polkadot.io]    [string] [required]
-  -s, --seed      Your mnemonic seed. It is not saved anywhere.
-                                                             [string] [required]
-      --emotes    array of emojis, space separated                       [array]
-  -r, --remove    array of emojis to remove from the list, space separated
-                                                                         [array]
 ```
