@@ -1,7 +1,8 @@
 #!/bin/bash
 
-for I in `cat egg_id.txt`; do \
-    for J in `cat keys.txt`; do node index.js \ 
+for I in `cat egg_id.txt`; do
+    for J in `cat keys.txt`; do
+    node index.js \
     --id $I \
     -e ws://kusama-rpc.polkadot.io \
     -s $J \
