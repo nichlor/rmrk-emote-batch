@@ -1,24 +1,42 @@
 // Import the API, Keyring and some utility functions
 const { ApiPromise, WsProvider } = require('@polkadot/api');
 const { Keyring } = require('@polkadot/keyring');
+const fs = require('fs');
 
 const options = require('yargs')
   .option('id', {
     type: 'string',
-    description: 'The id of your target egg',
-    required: true,
+    description: 'A file with RMRK IDs.',
+    required: false,
   })
   .option('endpoint', {
     alias: 'e',
     type: 'string',
-    description: 'The wss endpoint. [Westend = wss://westend-rpc.polkadot.io] [Kusama = wss://kusama-rpc.polkadot.io]',
+    description: 'The wss endpoint. (defaults to westend) [Westend = wss://westend-rpc.polkadot.io] [Kusama = wss://kusama-rpc.polkadot.io]',
     required: true,
   })
-  .option('seed', {
+  .option('secret-keys', {
     alias: 's',
     type: 'string',
-    description: 'Your mnemonic seed. It is not saved anywhere.',
-    required: true,
+    description: 'A file with secret keys or seed phrases. It is not saved anywhere.',
+    required: false,
+  })
+  .option('funding-account', {
+    alias: 'f',
+    type: 'string',
+    description: 'A file with secret key or seed phrase. It is not saved anywhere.',
+    required: false,
+  })
+  .option('receiving-addresses', {
+    alias: 'ra',
+    type: 'string',
+    description: 'Used with funding-account where we specify amount to transfer to receiving accounts in the accounts file.',
+    required: false,
+  })
+  .option('amount', {
+    type: 'num',
+    description: 'Used with funding-account where we specify amount to transfer to receiving accounts in the accounts file.',
+    required: false,
   })
   .option('emotes', {
     type: 'array',
@@ -31,6 +49,13 @@ const options = require('yargs')
     description: 'array of emojis to remove from the list, space separated',
     required: false,
   })
+  .option('chunk', {
+    alias: 'c',
+    type: 'boolean',
+    description: 'Boolean for if script should run chunked batch calls',
+    required: false,
+    default: true,
+  })
   .argv
 
 async function main() {
@@ -42,65 +67,169 @@ async function main() {
 
   const keyring = new Keyring({ type: 'sr25519', ss58Format: api.registry.chainSS58 });
 
-  const ID = options.id
-  const PHRASE = options.seed;
+  const rmrkIds = (typeof options.id !== 'undefined') 
+      ? fs.readFileSync(`${options.id}`, 'UTF-8').split(/\r?\n/).filter(entry => entry.trim() != '')
+      : undefined;
+  const keys = (typeof options['secret-keys'] !== 'undefined') 
+      ? fs.readFileSync(`${options['secret-keys']}`, 'UTF-8').split(/\r?\n/).filter(entry => entry.trim() != '')
+      : undefined;
+  const fundingAccount = (typeof options['funding-account'] !== 'undefined') 
+      ? fs.readFileSync(`${options['funding-account']}`, 'UTF-8').split(/\r?\n/).filter(entry => entry.trim() != '')
+      : undefined;
+  const receivingAddresses = (typeof options['receiving-addresses'] !== 'undefined') 
+      ? fs.readFileSync(`${options['receiving-addresses']}`, 'UTF-8').split(/\r?\n/).filter(entry => entry.trim() != '')
+      : undefined;
+  const amount = options.amount;
   const emotes = options.emotes;
-  const removeEmotes = options.remove
+  const removeEmotes = options.remove;
+  const chunk = options.chunk;
 
-  let account = keyring.addFromUri(PHRASE);
+  if (typeof fundingAccount !== 'undefined' && 
+      typeof receivingAddresses !== 'undefined' && 
+      typeof amount !== 'undefined') {
+    let account = keyring.addFromUri(fundingAccount[0]);
+    console.log('🤖 ACCOUNT_ADDRESS: ', account.address);
 
-  console.log('EGG_ID:          ', ID);
-  console.log('ACCOUNT_ADDRESS: ', account.address)
+    let fundings = [];
 
-  let rmrks = [];
+    /// KSM Precision [kusama guide](https://guide.kusama.network/docs/kusama-parameters/#precision)
+    const ksmPrecision = 1_000_000_000_000;
 
-  if (typeof emotes !== 'undefined') {
-    let emojisMapped = emotes.map((e) => e.toString());
-    emojisMapped.forEach((emoji) => {
-      let utf8 = emoji.codePointAt(0)?.toString(16);
-      if (utf8) {
-        console.log(`[emoji]: ${emoji} / ${utf8}`)
-        rmrks.push(api.tx.system.remark(`RMRK::EMOTE::1.0.0::${ID}::${utf8}`));
-      } else {
-        throw Error("Failed to create utf8 of emoji.")
-      }
-    });
-  } else {
-    let _emojis = [];
+    const avg_amount = (amount * ksmPrecision) / receivingAddresses.length;
 
-    console.log(`Total emojis in list: ${emojis.length}`);
+    console.log('💰 AVG_AMOUNT: ', avg_amount / ksmPrecision);
 
-    if (typeof removeEmotes !== 'undefined') {
-      let emojisMapped = removeEmotes.map((e) => e.toString());
-      let temp = [];
-      emojisMapped.forEach((emoji) => {
-        let utf8 = emoji.codePointAt(0)?.toString(16);
-        if (utf8) {
-          console.log(`[emoji to remove from list]: ${emoji} / ${utf8}`)
-          temp.push(utf8);
-        } else {
-          throw Error("Failed to create utf8 of emoji.")
-        }
-      });
-      _emojis = emojis.filter((e) => !temp.includes(e));
-    } else {
-      _emojis = emojis;
+    for (receiver of receivingAddresses) {
+      fundings.push(api.tx.balances.transfer(receiver, avg_amount));
+      console.log(`💸 Should send ${avg_amount / ksmPrecision} to ${receiver}`);
     }
-    
-    console.log(`Emojis count to be emoted: ${_emojis.length}`);
 
-    _emojis.forEach((emoji) => {
-      rmrks.push(api.tx.system.remark(`RMRK::EMOTE::1.0.0::${ID}::${emoji}`));
-    });
+    const tx = api.tx.utility.batch(fundings);
+
+    // Sign and send the transaction using account
+    const hash = await tx.signAndSend(account);
+
+    console.log('Transaction sent with hash', hash.toHex());
+
+  } else {
+    for (key of keys) {
+
+      let account = keyring.addFromUri(key);
+
+      console.log('🤖 ACCOUNT_ADDRESS: ', account.address)
+
+      let rmrks = [];
+
+      rmrkIds.forEach((id) => {
+
+        console.log(`🐤 RMRK_ID: ${id}`);
+
+        if (typeof emotes !== 'undefined') {
+          let emojisMapped = emotes.map((e) => e.toString());
+          emojisMapped.forEach((emoji) => {
+            let utf8 = Array.from(emoji)
+              .map((v) => v.codePointAt(0).toString(16))
+              .join('-');
+            if (utf8) {
+              console.log(`[emoji]: ${emoji} / ${utf8}`)
+              rmrks.push(api.tx.system.remark(`RMRK::EMOTE::1.0.0::${id}::${utf8}`));
+            } else {
+              throw Error("Failed to create utf8 of emoji.")
+            }
+          });
+        } else {
+          let _emojis = [];
+
+          console.log(`Total emojis in list: ${emojis.length}`);
+
+          if (typeof removeEmotes !== 'undefined') {
+            let emojisMapped = removeEmotes.map((e) => e.toString());
+            let temp = [];
+            emojisMapped.forEach((emoji) => {
+              let utf8 = Array.from(emoji)
+                .map((v) => v.codePointAt(0).toString(16))
+                .join('-');
+              if (utf8) {
+                console.log(`[emoji to remove from list]: ${emoji} / ${utf8}`)
+                temp.push(utf8);
+              } else {
+                throw Error("Failed to create utf8 of emoji.")
+              }
+            });
+            _emojis = emojis.filter((e) => !temp.includes(e));
+          } else {
+            _emojis = emojis;
+          }
+          
+          console.log(`Emojis count to be emoted: ${_emojis.length}`);
+
+          _emojis.forEach((emoji) => {
+            rmrks.push(api.tx.system.remark(`RMRK::EMOTE::1.0.0::${id}::${emoji}`));
+          });
+        }
+
+      });
+
+      if (chunk) {
+        let rmrksChunked = chunkArray(rmrks, 100);
+        
+        console.log(`Total rmrks: ${rmrks.length}`);
+        console.log(`Total rmrk chunks: ${rmrksChunked.length}`);
+
+        for (rmrkChunk of rmrksChunked) {
+          console.log(`Chunk size: ${rmrkChunk.length}`);
+
+          const tx = api.tx.utility.batch(rmrkChunk);
+          await sendAndFinalize(tx, account);
+        }
+      } else {
+        const tx = api.tx.utility.batch(rmrks);
+
+        // Sign and send the transaction using account
+        const hash = await tx.signAndSend(account);
+
+        console.log('Transaction sent with hash', hash.toHex());
+      }
+    }
   }
-  
-  const tx = api.tx.utility.batch(rmrks);
+}
 
-  // Sign and send the transaction using account
-  const hash = await tx.signAndSend(account);
+function chunkArray(array, size) {
+  let result = []
+  for (let i = 0; i < array.length; i += size) {
+    let chunk = array.slice(i, i + size)
+    result.push(chunk)
+  }
+  return result
+}
 
-  console.log('Transaction sent with hash', hash.toHex());
-  
+// Lovely function from [kanaria-hatcher index.ts](https://github.com/kianenigma/kanaria-hatchery/blob/30e98bd1f39336d1c11e877cf874c452a2aa3756/src/index.ts#L167)
+async function sendAndFinalize(tx, account) {
+  return new Promise(async resolve => {
+    let success = false;
+    let included = []
+    let finalized = []
+    let unsubscribe = await tx.signAndSend(account, ({ events = [], status, dispatchError }) => {
+      if (status.isInBlock) {
+        success = dispatchError ? false : true;
+        console.log(`📀 Transaction ${tx.meta.name} included at blockHash ${status.asInBlock} [success = ${success}]`);
+        included = [...events]
+      } else if (status.isBroadcast) {
+        console.log(`🚀 Transaction broadcasted.`);
+      } else if (status.isFinalized) {
+        status.is
+        console.log(`💯 Transaction ${tx.meta.name}(..) Finalized at blockHash ${status.asFinalized}`);
+        finalized = [...events]
+        let hash = status.hash;
+        unsubscribe();
+        resolve({ success, hash, included, finalized })
+      } else if (status.isReady) {
+        // let's not be too noisy..
+      } else {
+        console.log(`🤷 Other status ${status}`)
+      }
+    })
+  })
 }
 
 const emojis = [
